@@ -87,12 +87,18 @@ function td(content, className="")
 <script>
 	/* Code I added: */
 
+	/* create a 2 x 5 array to store the order information */
+	let order = new Array(2);
+	for (i = 0; i < order.length; i++) {
+		order[i] = new Array(5);
+	}
+	
+
 	/* hide street and city if pickup */
 	const showPickup = () => {
 		let address = document.querySelectorAll(".userInfo.address");
 
 		for (i = 0; i < address.length; i++) {
-			console.log(address[i]);
 			address[i].style.display = 'none';
 		}
 	}
@@ -118,6 +124,9 @@ function td(content, className="")
 		for (i = 0; i < menuItems.length; i++) {
 			let quan = document.getElementsByName("quan" + i);
 			totalCost[i].value = (quan[0].value * menuItems[i].cost).toFixed(2);
+			// fill in order array:
+			order[0][i] = menuItems[i].name;
+			order[1][i] = quan[0].value;
 			subtotal_val += Number(totalCost[i].value);
 		}
 
@@ -125,18 +134,19 @@ function td(content, className="")
 		tax.value = (parseFloat(subtotal_val) * 0.0625).toFixed(2);
 		total.value = (parseFloat(subtotal_val) + parseFloat(parseFloat(subtotal_val) * 0.0625)).toFixed(2);
 	}
+
+	let pickupTime = 0;
 		
 	/* calculate time it will be ready */
 	const calculateTime = () => {	
-		let actualTime = new Date();
 		let orderType = document.getElementsByName("p_or_d");
 
 		if (orderType == "pickup") {
-			pickupTime = setMinutes(actualTime.getMinutes() + 15);
+			console.log(actualTime.getMinutes());
+			pickupTime = new Date(new Date().setMinutes(new Date().getMinutes() + 15)).toLocaleString()
 		} else {
-			pickupTime = setMinutes(actualTime.getMinutes() + 45);
+			pickupTime = new Date(new Date().setMinutes(new Date().getMinutes() + 45)).toLocaleString()
 		}
-		document.write("Your order will be ready at " + pickupTime);
 		
 		/* if delivery, street and city are required */
 		if (orderType == "delivery") {
@@ -148,9 +158,8 @@ function td(content, className="")
 		
 	/* check that full name and phone number are entered */
 	const validateForm = () => {
-		let lname = document.getElementsByName("lname");
+		let lname = document.querySelector("input[name='lname']");
 		let phone = document.querySelector("input[name='phone']");
-		console.log("phone " + phone.value);
 
 		if (lname.value == "") {
 			alert("Please enter your last name");
@@ -160,9 +169,8 @@ function td(content, className="")
 			return false;
 		} else {  
 			/* check that phone number is valid */
-			let phoneNumber = phone.toString();
-			if (phoneNumber.length != 10 || phoneNumber.length != 7) {
-				console.log(phoneNumber.length);
+			let phoneNumber = phone.value.toString();
+			if (phoneNumber.length != 10 && phoneNumber.length != 7) {
 				alert("Please enter a valid phone number");
 				return false;
 			}
@@ -170,8 +178,8 @@ function td(content, className="")
 		/* check that at least one item is ordered */
 		let totalItems = 0;
 		for (i = 0; i < menuItems.length; i++) {
-			let quan = document.getElementsByName("quan");
-			totalItems += quan[i].value;
+			let quan = document.getElementsByName("quan" + i);
+			totalItems += quan[0].value;
 		}
 		if (totalItems == 0) {
 			alert("Please order at least one item");
@@ -197,28 +205,48 @@ function td(content, className="")
 		
 	/* if valid form, display thanks message */
 	const confirmOrder = () => {
-		document.write("Thank you for your order!");
-
 		/* if valid form, create new window with order details */
-		let orderWindow = window.open("order.html", "Order Details", "width=400, height=400");
-		orderWindow.document.write("Order Details");
-		orderWindow.document.write("Name: " + fname + " " + lname);
-		orderWindow.document.write("Phone: " + phone);
-		orderWindow.document.write("Order Type: " + orderType);
-		orderWindow.document.write("Order Items: ");
+		let fname = document.querySelector("input[name='fname']");
+		let lname = document.querySelector("input[name='lname']");
+		let phone = document.querySelector("input[name='phone']");
+		let orderType = document.querySelector("input[name='p_or_d']");
+		let subtotal = document.querySelector("input[name='subtotal']");
+		let tax = document.querySelector("input[name='tax']");
+		let total = document.querySelector("input[name='total']");
+		let street = document.querySelector("input[name='street']");
+		let city = document.querySelector("input[name='city']");
+
+
+		let string = "Order Details: <br><br>";
+		if (fname.value != "") {
+			string += "Name: " + fname.value + " " + lname.value + "<br>"
+		} else {
+			string += "Name: " + lname.value + "<br>"
+		}
+		string += " Phone: " + phone.value + "<br>"
+		string += " Order Type: " + orderType.value + "<br>"
+		string += " Order Items: <br>"
 		for (i = 0; i < menuItems.length; i++) {
-			if (quan[i] > 0) {
-				orderWindow.document.write(quan[i] + " " + menuItems[i].name);
+			if (order[1][i] > 0) {
+				string += order[0][i] + " - " + order[1][i] + "<br>"
 			}
 		}
-		orderWindow.document.write("subtotal: " + subtotal);
-		orderWindow.document.write("tax: " + tax);
-		orderWindow.document.write("total: " + total);
-		if (orderType == "delivery") {
-			orderWindow.document.write("delivery address: " + street + ", " + city);
+		string += "subtotal: " + subtotal.value + "<br>"
+		string += "tax: " + tax.value + "<br>"
+		string += "total: " + total.value + "<br>"
+		if (orderType.value == "delivery") {
+			string += "Street: " + street.value + "<br>"
+			string += "City: " + city.value + "<br>"
+			string += "Delivery Time: " + pickupTime + "<br>"
 		} else {
-			orderWindow.document.write("pickup time: " + pickupTime);
+			string += "Pickup Time: " + pickupTime + "<br>"
 		}
+
+		const orderWindow = window.open()
+		orderWindow.document.write(string)
+
+		document.write("Thank you for your order!");
+
 	};
 
 	$(document).ready(function() {
